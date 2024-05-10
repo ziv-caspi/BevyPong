@@ -7,6 +7,7 @@ use bevy::{
 
 use crate::{
     game_manager::{countdown_guard, AllowedToRun, Scored},
+    paddle::Paddle,
     spritesheet_animation::{AnimationIndices, AnimationTimer},
     utils::{ball_collision, project_positions, Collision, Position, Shape, Velocity},
 };
@@ -128,9 +129,10 @@ fn reset_on_score(
         let (mut position, mut velocity) = ball.get_single_mut()?;
         for event in events.read() {
             position.0 = Vec2::new(0., 0.);
+            velocity.0.y = INITIAL_SPEED;
             match event {
-                Scored::Player => velocity.0.x *= 1.,
-                Scored::Ai => velocity.0.x *= -1.,
+                Scored::Player => velocity.0.x = 1. * INITIAL_SPEED,
+                Scored::Ai => velocity.0.x = -1. * INITIAL_SPEED,
             };
         }
         Ok(())
@@ -168,6 +170,20 @@ fn adjust_sprite_flip_rotation(
     }();
 }
 
+fn increase_speed_on_collision(
+    mut ball: Query<&mut Velocity, With<Ball>>,
+    paddles: Query<&Paddle>,
+    mut events: EventReader<BallCollision>,
+) {
+    for event in events.read() {
+        if paddles.contains(event.entity) {
+            let mut velocity = ball.single_mut();
+            velocity.0.x += if velocity.0.x > 0. { 1.0 } else { -1.0 };
+            velocity.0.y += if velocity.0.y > 0. { 1.0 } else { -1.0 };
+        }
+    }
+}
+
 pub struct BallPlugin;
 impl Plugin for BallPlugin {
     fn build(&self, app: &mut App) {
@@ -177,6 +193,7 @@ impl Plugin for BallPlugin {
                 (
                     adjust_sprite_flip_rotation,
                     reset_on_score,
+                    increase_speed_on_collision,
                     countdown_guard.pipe(move_ball),
                     project_positions.after(move_ball),
                     collision.after(move_ball),
