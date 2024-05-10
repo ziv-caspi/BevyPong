@@ -3,9 +3,9 @@ use crate::{
     utils::{project_positions, Position, Shape, Velocity},
 };
 use anyhow::Result;
-use bevy::{prelude::*, sprite::MaterialMesh2dBundle};
+use bevy::{prelude::*, sprite::MaterialMesh2dBundle, transform::commands};
 
-const WIDTH: f32 = 10.;
+const WIDTH: f32 = 30.;
 const HEIGHT: f32 = 100.;
 const SPEED: f32 = 5.;
 
@@ -31,6 +31,7 @@ fn spawn(
     mut meshes: ResMut<Assets<Mesh>>,
     mut materials: ResMut<Assets<ColorMaterial>>,
     window: Query<&Window>,
+    asset_server: Res<AssetServer>,
 ) {
     let window_width = window.get_single().unwrap().resolution.width();
     let padding = 50.;
@@ -59,10 +60,13 @@ fn spawn(
             }),
             velocity: Velocity(Vec2::new(0., 0.)),
         },
-        MaterialMesh2dBundle {
-            mesh: mesh_handle.clone().into(),
-            material: player_color_handle.clone(),
-            ..Default::default()
+        SpriteBundle {
+            texture: asset_server.load("paddle.png"),
+            sprite: Sprite {
+                custom_size: Some(Vec2::new(WIDTH, HEIGHT)),
+                ..default()
+            },
+            ..default()
         },
     ));
 
@@ -80,10 +84,13 @@ fn spawn(
             }),
             velocity: Velocity(Vec2::new(0., 0.)),
         },
-        MaterialMesh2dBundle {
-            mesh: mesh_handle.clone().into(),
-            material: ai_color_handle.clone(),
-            ..Default::default()
+        SpriteBundle {
+            texture: asset_server.load("paddle.png"),
+            sprite: Sprite {
+                custom_size: Some(Vec2::new(WIDTH, HEIGHT)),
+                ..default()
+            },
+            ..default()
         },
     ));
 }
