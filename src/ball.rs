@@ -6,7 +6,7 @@ use bevy::{
 };
 
 use crate::{
-    game_manager::Scored,
+    game_manager::{countdown_guard, AllowedToRun, Scored},
     spritesheet_animation::{AnimationIndices, AnimationTimer},
     utils::{ball_collision, project_positions, Collision, Position, Shape, Velocity},
 };
@@ -81,7 +81,14 @@ fn spawn_ball(
     ));
 }
 
-fn move_ball(mut ball: Query<(&mut Position, &Velocity), With<Ball>>) {
+fn move_ball(
+    In(allowed): In<AllowedToRun>,
+    mut ball: Query<(&mut Position, &Velocity), With<Ball>>,
+) {
+    if !allowed {
+        return;
+    }
+
     if let Ok((mut position, velocity)) = ball.get_single_mut() {
         position.0 += velocity.0
     }
@@ -170,7 +177,7 @@ impl Plugin for BallPlugin {
                 (
                     adjust_sprite_flip_rotation,
                     reset_on_score,
-                    move_ball,
+                    countdown_guard.pipe(move_ball),
                     project_positions.after(move_ball),
                     collision.after(move_ball),
                 ),
